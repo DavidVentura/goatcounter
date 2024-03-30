@@ -51,7 +51,7 @@ type Line interface {
 	Language() string
 
 	Timing() time.Duration
-	Datetime(scan *Scanner) (time.Time, error)
+	Datetime(s *Scanner) (time.Time, error)
 }
 
 const (
@@ -136,8 +136,9 @@ func NewFollow(ctx context.Context, file, format, date, tyme, datetime string, e
 func makeNew(format, date, tyme, datetime string, exclude []string) (*Scanner, error) {
 	var p LineParser
 	var err error
+
 	if format == "caddy" {
-		p = CaddyParser{}
+		p = CaddyParser{datetime: datetime}
 	} else {
 		p, err = newRegexParser(format, date, tyme, datetime, exclude)
 	}

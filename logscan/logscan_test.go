@@ -127,7 +127,7 @@ func TestNew(t *testing.T) {
 					t.Errorf("\nwant: %v\ngot:  %v", w, data)
 				}
 
-				dt, err := data.Datetime(scan)
+				dt, err := data.Datetime(scan.lp)
 				if err != nil {
 					t.Logf("%q %q %q", w["date"], w["time"], w["datetime"])
 					t.Fatal(err)

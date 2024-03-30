@@ -8,13 +8,14 @@ import (
 	"time"
 )
 
+// https://caddyserver.com/docs/caddyfile/directives/log
 type CaddyLogEntry struct {
-	Timestamp   float64 `json:"ts"`
-	Request     Request `json:"request"`
-	Duration    float64 `json:"duration"`
-	Size_       int     `json:"size"`
-	Status_     int     `json:"status"`
-	RespHeaders Headers `json:"resp_headers"`
+	Timestamp   interface{} `json:"ts"`
+	Request     Request     `json:"request"`
+	Duration    float64     `json:"duration"`
+	Size_       int         `json:"size"`
+	Status_     int         `json:"status"`
+	RespHeaders Headers     `json:"resp_headers"`
 }
 
 type Request struct {
@@ -35,6 +36,7 @@ type Headers struct {
 }
 
 type CaddyParser struct {
+	datetime string
 }
 
 func (p CaddyParser) Parse(line string) (Line, bool, error) {
@@ -75,12 +77,50 @@ func (l CaddyLogEntry) Query() string {
 
 func (l CaddyLogEntry) Timing() time.Duration {
 	// TODO: `Second` should depend on the log format
+	// {seconds, nano, string} where string in {1m32.05s, 6.31ms}
 	return time.Duration(l.Duration * float64(time.Second))
 }
 
-func (l CaddyLogEntry) Datetime(scan *Scanner) (time.Time, error) {
-	sec, dec := math.Modf(l.Timestamp)
-	t := time.Unix(int64(sec), int64(dec*(1e9)))
+func (l CaddyLogEntry) Datetime(s *Scanner) (time.Time, error) {
+	/* time_format can be
+
+	   - unix_seconds_float Floating-point number of seconds since the Unix epoch.
+	   - unix_milli_float 	Floating-point number of milliseconds since the Unix epoch.
+	   - unix_nano 			Integer number of nanoseconds since the Unix epoch.
+	   - iso8601 			Example: 2006-01-02T15:04:05.000Z0700
+	   - rfc3339 			Example: 2006-01-02T15:04:05Z07:00
+	   - rfc3339_nano 		Example: 2006-01-02T15:04:05.999999999Z07:00
+	   - wall 				Example: 2006/01/02 15:04:05
+	   - wall_milli 		Example: 2006/01/02 15:04:05.000
+	   - wall_nano 			Example: 2006/01/02 15:04:05.000000000
+	   - common_log 		Example: 02/Jan/2006:15:04:05 -0700
+
+	   Or, any compatible time layout string; see the Go documentation for full details.
+	*/
+
+	parser := s.lp.(CaddyParser)
+	var t time.Time
+	var err error
+	switch parser.datetime {
+	case "", "unix_seconds_float":
+		// Caddy's default
+		v := l.Timestamp.(float64)
+		sec, dec := math.Modf(v)
+		t = time.Unix(int64(sec), int64(dec*(1e9)))
+	case "unix_milli_float":
+		v := l.Timestamp.(float64)
+		sec, dec := math.Modf(v / 1000)
+		t = time.Unix(int64(sec), int64(dec*(1e9)))
+	case "unix_nano":
+		v := l.Timestamp.(float64)
+		t = time.UnixMicro(int64(v / 1000))
+	default:
+		v := l.Timestamp.(string)
+		t, err = time.Parse(parser.datetime, v)
+		if err != nil {
+			return time.Unix(0, 0).UTC(), err
+		}
+	}
 	return t, nil
 }
 func (l CaddyLogEntry) XForwardedFor() string {

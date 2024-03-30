@@ -195,6 +195,9 @@ Date and time parsing:
         rfc3339nano    2006-01-02T15:04:05.999999999Z07:00
 
     The full documentation is available at https://pkg.go.dev/time
+
+    The 'caddy' format _also_ accepts:
+       'unix_seconds_float', 'unix_milli_float' and 'unix_nano' for datetime
 `
 
 func cmdImport(f zli.Flags, ready chan<- struct{}, stop chan struct{}) error {

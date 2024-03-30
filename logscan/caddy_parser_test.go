@@ -47,7 +47,7 @@ func TestParseLine(t *testing.T) {
 	if line.Timing() != 1234567 {
 		t.Fatalf("Unexpected Timing: %#v", line.Timing())
 	}
-	dt, err := line.Datetime(nil)
+	dt, err := line.Datetime(p)
 	if err != nil {
 		t.Fatalf("Failed to parse Datetime: %#v", err)
 	}
@@ -68,5 +68,42 @@ func TestParseLine(t *testing.T) {
 	}
 	if line.Language() != "en" {
 		t.Fatalf("Unexpected Language: %#v", line.Language())
+	}
+}
+
+func TestParseLineDatetimeFormat(t *testing.T) {
+
+	epoch := time.Unix(0, 0).UTC()
+	var testdata = []struct {
+		format string
+		input  string
+		delta  time.Duration
+	}{
+		{"", `{"ts":1.5}`, 1500 * time.Millisecond}, // default value
+		{"unix_seconds_float", `{"ts":1.5}`, 1500 * time.Millisecond},
+		{"unix_milli_float", `{"ts":1500}`, 1500 * time.Millisecond},
+		{"unix_milli_float", `{"ts":1500.1}`, 1_500_100 * time.Microsecond},
+		{"unix_nano", `{"ts":1500000000}`, 1_500_000_000 * time.Nanosecond},
+		{time.RFC3339, `{"ts":"1970-01-01T00:00:05+00:00"}`, 5 * time.Second},
+	}
+	for _, tt := range testdata {
+		t.Run(tt.format, func(t *testing.T) {
+			p := CaddyParser{datetime: tt.format}
+			line, skip, err := p.Parse(tt.input)
+			if skip {
+				t.Fatalf("Entry skipped")
+			}
+			if err != nil {
+				t.Fatalf("Failed to parse: %#v", err)
+			}
+			dt, err := line.Datetime(p)
+			if err != nil {
+				t.Fatalf("Failed to parse Datetime: %#v", err)
+			}
+			expected := epoch.Add(tt.delta)
+			if dt.UTC() != expected.UTC() {
+				t.Fatalf("Unexpected Datetime: %#v vs %#v", dt, expected)
+			}
+		})
 	}
 }
