@@ -8,7 +8,7 @@
     "proto": "HTTP/1.1",
     "method": "GET",
     "host": "host.example.com",
-    "uri": "/absolute_uri.html",
+    "uri": "/absolute_uri.html?queryparam=value",
     "headers": {
       "Connection": [
         "Close"

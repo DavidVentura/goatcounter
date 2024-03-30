@@ -41,7 +41,7 @@ func TestParseLine(t *testing.T) {
 	if line.Size() != 2803 {
 		t.Fatalf("Unexpected Size: %#v", line.Size())
 	}
-	if line.Query() != "" {
+	if line.Query() != "queryparam=value" {
 		t.Fatalf("Unexpected Query: %#v", line.Query())
 	}
 	if line.Timing() != 1234567 {

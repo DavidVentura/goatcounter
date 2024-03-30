@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/url"
 	"time"
 )
 
@@ -54,12 +55,22 @@ func (l CaddyLogEntry) Host() string       { return l.Request.Host }
 func (l CaddyLogEntry) RemoteAddr() string { return l.Request.RemoteAddr }
 func (l CaddyLogEntry) Method() string     { return l.Request.Method }
 func (l CaddyLogEntry) HTTP() string       { return l.Request.Proto }
-func (l CaddyLogEntry) Path() string       { return l.Request.URI }
 func (l CaddyLogEntry) Status() int        { return l.Status_ }
 func (l CaddyLogEntry) Size() int          { return l.Size_ }
+func (l CaddyLogEntry) Path() string {
+	u, err := url.Parse(l.Request.URI)
+	if err != nil {
+		return ""
+	}
+	return u.Path
+}
 
 func (l CaddyLogEntry) Query() string {
-	return "" // TODO
+	u, err := url.Parse(l.Request.URI)
+	if err != nil {
+		return ""
+	}
+	return u.RawQuery
 }
 
 func (l CaddyLogEntry) Timing() time.Duration {
