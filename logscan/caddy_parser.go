@@ -60,7 +60,7 @@ func (l CaddyLogEntry) HTTP() string       { return l.Request.Proto }
 func (l CaddyLogEntry) Status() int        { return l.Status_ }
 func (l CaddyLogEntry) Size() int          { return l.Size_ }
 func (l CaddyLogEntry) Path() string {
-	u, err := url.Parse(l.Request.URI)
+	u, err := url.ParseRequestURI(l.Request.URI)
 	if err != nil {
 		return ""
 	}

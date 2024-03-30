@@ -72,7 +72,6 @@ func TestParseLine(t *testing.T) {
 }
 
 func TestParseLineDatetimeFormat(t *testing.T) {
-
 	epoch := time.Unix(0, 0).UTC()
 	var testdata = []struct {
 		format string
@@ -105,5 +104,19 @@ func TestParseLineDatetimeFormat(t *testing.T) {
 				t.Fatalf("Unexpected Datetime: %#v vs %#v", dt, expected)
 			}
 		})
+	}
+}
+
+func TestParseUrl(t *testing.T) {
+	p := CaddyParser{}
+	line, skip, err := p.Parse(`{"request": {"uri": "//asd"}}`)
+	if skip {
+		t.Fatalf("Entry skipped")
+	}
+	if err != nil {
+		t.Fatalf("Failed to parse: %#v", err)
+	}
+	if line.Path() != "//asd" {
+		t.Fatalf("Unexpected Path: %#v", line.Path())
 	}
 }
