@@ -134,7 +134,13 @@ func NewFollow(ctx context.Context, file, format, date, tyme, datetime string, e
 }
 
 func makeNew(format, date, tyme, datetime string, exclude []string) (*Scanner, error) {
-	p, err := newRegexParser(format, date, tyme, datetime, exclude)
+	var p LineParser
+	var err error
+	if format == "caddy" {
+		p = CaddyParser{}
+	} else {
+		p, err = newRegexParser(format, date, tyme, datetime, exclude)
+	}
 	if err != nil {
 		return nil, err
 	}
