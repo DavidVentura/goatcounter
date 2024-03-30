@@ -224,8 +224,8 @@ func (l RegexLine) Timing() time.Duration {
 	return 0
 }
 
-func (l RegexLine) Datetime(scanner *Scanner) (time.Time, error) {
-	parser := scanner.lp.(*RegexParser)
+func (l RegexLine) Datetime(lp LineParser) (time.Time, error) {
+	parser := lp.(*RegexParser)
 	s, ok := l["date"]
 	if ok {
 		t, err := time.Parse(parser.date, s)

@@ -51,7 +51,7 @@ type Line interface {
 	Language() string
 
 	Timing() time.Duration
-	Datetime(s *Scanner) (time.Time, error)
+	Datetime(lp LineParser) (time.Time, error)
 }
 
 const (
@@ -178,4 +178,8 @@ start:
 	}
 
 	return parsed, line, s.lineno, nil
+}
+
+func (s *Scanner) Datetime(l Line) (time.Time, error) {
+	return l.Datetime(s.lp)
 }

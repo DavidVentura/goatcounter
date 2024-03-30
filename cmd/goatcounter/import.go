@@ -378,7 +378,7 @@ func importLog(
 			UserAgent: line.UserAgent(),
 		}
 
-		hit.CreatedAt, err = line.Datetime(scan)
+		hit.CreatedAt, err = scan.Datetime(line)
 		if err != nil {
 			zlog.Error(err)
 			continue

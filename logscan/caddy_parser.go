@@ -81,7 +81,7 @@ func (l CaddyLogEntry) Timing() time.Duration {
 	return time.Duration(l.Duration * float64(time.Second))
 }
 
-func (l CaddyLogEntry) Datetime(s *Scanner) (time.Time, error) {
+func (l CaddyLogEntry) Datetime(lp LineParser) (time.Time, error) {
 	/* time_format can be
 
 	   - unix_seconds_float Floating-point number of seconds since the Unix epoch.
@@ -98,7 +98,7 @@ func (l CaddyLogEntry) Datetime(s *Scanner) (time.Time, error) {
 	   Or, any compatible time layout string; see the Go documentation for full details.
 	*/
 
-	parser := s.lp.(CaddyParser)
+	parser := lp.(CaddyParser)
 	var t time.Time
 	var err error
 	switch parser.datetime {
