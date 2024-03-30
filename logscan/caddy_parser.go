@@ -61,6 +61,17 @@ func (l CaddyLogEntry) Size() int          { return l.Size_ }
 func (l CaddyLogEntry) Query() string {
 	return "" // TODO
 }
+
+func (l CaddyLogEntry) Timing() time.Duration {
+	// TODO: `Second` should depend on the log format
+	return time.Duration(l.Duration * float64(time.Second))
+}
+
+func (l CaddyLogEntry) Datetime(scan *Scanner) (time.Time, error) {
+	sec, dec := math.Modf(l.Timestamp)
+	t := time.Unix(int64(sec), int64(dec*(1e9)))
+	return t, nil
+}
 func (l CaddyLogEntry) XForwardedFor() string {
 	if len(l.Request.Headers.XForwardedFor) > 0 {
 		return l.Request.Headers.XForwardedFor[0]
@@ -90,14 +101,4 @@ func (l CaddyLogEntry) Language() string {
 		return l.Request.Headers.AcceptLanguage[0]
 	}
 	return ""
-}
-
-func (l CaddyLogEntry) Timing() time.Duration {
-	return time.Duration(l.Duration) * time.Millisecond
-}
-
-func (l CaddyLogEntry) Datetime(scan *Scanner) (time.Time, error) {
-	sec, dec := math.Modf(l.Timestamp)
-	t := time.Unix(int64(sec), int64(dec*(1e9)))
-	return t, nil
 }
