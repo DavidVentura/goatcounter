@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"strings"
 	"time"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 // https://caddyserver.com/docs/caddyfile/directives/log
@@ -36,7 +39,8 @@ type Headers struct {
 }
 
 type CaddyParser struct {
-	datetime string
+	datetime        string
+	excludePatterns []excludePattern
 }
 
 func (p CaddyParser) Parse(line string) (Line, bool, error) {
@@ -47,6 +51,11 @@ func (p CaddyParser) Parse(line string) (Line, bool, error) {
 		return nil, false, err
 	}
 
+	for _, e := range p.excludePatterns {
+		if logEntry.matchesPattern(e) {
+			return nil, true, nil
+		}
+	}
 	return logEntry, false, nil
 }
 
@@ -152,4 +161,57 @@ func (l CaddyLogEntry) Language() string {
 		return l.Request.Headers.AcceptLanguage[0]
 	}
 	return ""
+}
+
+func (l CaddyLogEntry) fieldValue(name string) string {
+	switch name {
+	default:
+		panic(fmt.Sprintf("Received invalid field request: %s", name))
+	case fieldUserAgent:
+		return l.UserAgent()
+	case fieldHost:
+		return l.Host()
+	case fieldRemoteAddr:
+		return l.RemoteAddr()
+	case fieldAcceptLanguage:
+		return l.Language()
+	case fieldContentType:
+		return l.ContentType()
+	case fieldHttp:
+		return l.HTTP()
+	case fieldMethod:
+		return l.Method()
+	case fieldPath:
+		return l.Path()
+	case fieldQuery:
+		return l.Query()
+	case fieldReferrer:
+		return l.Referrer()
+	case fieldSize:
+		return fmt.Sprint(l.Size())
+	case fieldStatus:
+		return fmt.Sprint(l.Status())
+	case fieldXff:
+		return l.XForwardedFor()
+	}
+}
+
+func (l CaddyLogEntry) matchesPattern(e excludePattern) bool {
+	var m bool
+	fieldValue := l.fieldValue(e.field)
+	switch e.kind {
+	default:
+		m = strings.Contains(fieldValue, e.pattern)
+	case excludeGlob:
+		// We use doublestar instead of filepath.Match() because the latter
+		// doesn't support "**" and "{a,b}" patterns, both of which are very
+		// useful here.
+		m, _ = doublestar.Match(e.pattern, fieldValue)
+	case excludeRe:
+		m = e.re.MatchString(fieldValue)
+	}
+	if e.negate {
+		return !m
+	}
+	return m
 }
