@@ -155,10 +155,15 @@ func makeNew(format, date, tyme, datetime string, exclude []string) (*Scanner, e
 	var p LineParser
 	var err error
 
+	excludePatt, err := processExcludes(exclude)
+	if err != nil {
+		return nil, err
+	}
+
 	if format == "caddy" {
-		p = CaddyParser{datetime: datetime}
+		p = CaddyParser{datetime: datetime, excludePatterns: excludePatt}
 	} else {
-		p, err = newRegexParser(format, date, tyme, datetime, exclude)
+		p, err = newRegexParser(format, date, tyme, datetime, excludePatt)
 	}
 	if err != nil {
 		return nil, err

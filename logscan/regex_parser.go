@@ -42,18 +42,14 @@ func (p RegexParser) Parse(line string) (Line, bool, error) {
 
 var _ LineParser = RegexParser{}
 
-func newRegexParser(format, date, tyme, datetime string, exclude []string) (*RegexParser, error) {
+func newRegexParser(format, date, tyme, datetime string, exclude []excludePattern) (*RegexParser, error) {
 	of := format
 	format, date, tyme, datetime = getFormat(format, date, tyme, datetime)
 	if format == "" {
 		return nil, errors.Errorf("unknown format: %s", of)
 	}
 
-	excludePatt, err := processExcludes(exclude)
-	if err != nil {
-		return nil, err
-	}
-
+	var err error
 	pat := reFormat.ReplaceAllStringFunc(regexp.QuoteMeta(format), func(m string) string {
 		m = m[2:]
 
@@ -129,7 +125,7 @@ func newRegexParser(format, date, tyme, datetime string, exclude []string) (*Reg
 		date:     date,
 		time:     tyme,
 		datetime: datetime,
-		exclude:  excludePatt,
+		exclude:  exclude,
 	}, nil
 }
 
