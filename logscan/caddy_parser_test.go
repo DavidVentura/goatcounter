@@ -1,7 +1,11 @@
 package logscan
 
 import (
+	"context"
+	"io"
 	"io/ioutil"
+	"os"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -118,5 +122,61 @@ func TestParseUrl(t *testing.T) {
 	}
 	if line.Path() != "//asd" {
 		t.Fatalf("Unexpected Path: %#v", line.Path())
+	}
+}
+
+func TestParseMultipleLines(t *testing.T) {
+	want := []CaddyLogEntry{
+		CaddyLogEntry{Timestamp: 1706788852.6825173,
+			Request:     Request{RemoteAddr: "1.2.3.4:41844", Proto: "HTTP/2.0", Method: "HEAD", Host: "host.example.com", URI: "/path.html", Headers: Headers{UserAgent: []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"}, Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string(nil)}},
+			Duration:    0.000455129,
+			Size_:       0,
+			Status_:     304,
+			RespHeaders: Headers{UserAgent: []string(nil), Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string(nil)}},
+		CaddyLogEntry{Timestamp: 1706788853.7180748,
+			Request:     Request{RemoteAddr: "1.2.3.4:41844", Proto: "HTTP/2.0", Method: "HEAD", Host: "host.example.com", URI: "/path.html", Headers: Headers{UserAgent: []string(nil), Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string{"ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"}}},
+			Duration:    0.000356122,
+			Size_:       0,
+			Status_:     304,
+			RespHeaders: Headers{UserAgent: []string(nil), Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string(nil)}},
+		CaddyLogEntry{Timestamp: 1706788854.7159958,
+			Request:  Request{RemoteAddr: "1.2.3.4:41844", Proto: "HTTP/2.0", Method: "HEAD", Host: "host.example.com", URI: "/path.html", Headers: Headers{UserAgent: []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"}, Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string{"ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"}}},
+			Duration: 0.000728, Size_: 0, Status_: 304, RespHeaders: Headers{UserAgent: []string(nil), Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string(nil)}},
+		CaddyLogEntry{Timestamp: 1706788855.7197819,
+			Request:     Request{RemoteAddr: "1.2.3.4:41844", Proto: "HTTP/2.0", Method: "HEAD", Host: "host.example.com", URI: "/path.html", Headers: Headers{UserAgent: []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"}, Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string{"ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"}}},
+			Duration:    0.000275939,
+			Size_:       0,
+			Status_:     304,
+			RespHeaders: Headers{UserAgent: []string(nil), Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string(nil)}},
+		CaddyLogEntry{Timestamp: 1706788856.6911514,
+			Request:     Request{RemoteAddr: "1.2.3.4:41844", Proto: "HTTP/2.0", Method: "HEAD", Host: "host.example.com", URI: "/path.html", Headers: Headers{UserAgent: []string{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"}, Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string{"ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"}}},
+			Duration:    0.000210732,
+			Size_:       0,
+			Status_:     304,
+			RespHeaders: Headers{UserAgent: []string(nil), Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string(nil)},
+		},
+	}
+	fd, err := os.Open("./caddy_testdata/2.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	scan, err := New(fd, `caddy`, "", "", "", []string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := []CaddyLogEntry{}
+	for {
+		data, _, _, err := scan.Line(context.Background())
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		got = append(got, data.(CaddyLogEntry))
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("\ngot:  %#v\nwant: %#v", got, want)
 	}
 }
