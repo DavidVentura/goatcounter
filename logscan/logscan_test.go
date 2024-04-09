@@ -93,6 +93,9 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
 		t.Run(f.Name(), func(t *testing.T) {
 			fp, err := os.Open("./testdata/" + f.Name())
 			if err != nil {

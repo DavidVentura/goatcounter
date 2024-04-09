@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseLine(t *testing.T) {
-	data, err := os.ReadFile("./caddy_testdata/1.json")
+	data, err := os.ReadFile("./testdata/caddy/1.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +76,7 @@ func TestParseLine(t *testing.T) {
 
 func TestParseLineDatetimeFormat(t *testing.T) {
 	epoch := time.Unix(0, 0).UTC()
-	var testdata = []struct {
+	testdata := []struct {
 		format string
 		input  string
 		delta  time.Duration
@@ -155,7 +155,7 @@ func TestParseMultipleLines(t *testing.T) {
 			RespHeaders: CaddyHeaders{UserAgent: []string(nil), Referer: []string(nil), ContentType: []string(nil), XForwardedFor: []string(nil), AcceptLanguage: []string(nil)},
 		},
 	}
-	fp, err := os.Open("./caddy_testdata/2.json")
+	fp, err := os.Open("./testdata/caddy/2.json")
 	if err != nil {
 		t.Fatal(err)
 	}
