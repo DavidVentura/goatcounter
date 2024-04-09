@@ -169,9 +169,7 @@ func makeNew(format, date, tyme, datetime string, exclude []string) (*Scanner, e
 		return nil, err
 	}
 
-	return &Scanner{
-		lp: p,
-	}, nil
+	return &Scanner{lp: p}, nil
 }
 
 // Line processes a single line.
@@ -262,4 +260,23 @@ func processExcludes(exclude []string) ([]excludePattern, error) {
 	}
 
 	return patterns, nil
+}
+
+func matchesPattern(e excludePattern, v string) bool {
+	var m bool
+	switch e.kind {
+	default:
+		m = strings.Contains(v, e.pattern)
+	case excludeGlob:
+		// We use doublestar instead of filepath.Match() because the latter
+		// doesn't support "**" and "{a,b}" patterns, both of which are very
+		// useful here.
+		m, _ = doublestar.Match(e.pattern, v)
+	case excludeRe:
+		m = e.re.MatchString(v)
+	}
+	if e.negate {
+		return !m
+	}
+	return m
 }

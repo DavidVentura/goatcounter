@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
-	"github.com/bmatcuk/doublestar/v4"
 	"zgo.at/errors"
 )
 
@@ -39,8 +37,6 @@ func (p RegexParser) Parse(line string) (Line, bool, error) {
 
 	return parsed, false, nil
 }
-
-var _ LineParser = RegexParser{}
 
 func newRegexParser(format, date, tyme, datetime string, exclude []excludePattern) (*RegexParser, error) {
 	of := format
@@ -194,23 +190,6 @@ func toUi64(s string) uint64 {
 	return n
 }
 
-var _ Line = RegexLine{}
-
 func (l RegexLine) matchesPattern(e excludePattern) bool {
-	var m bool
-	switch e.kind {
-	default:
-		m = strings.Contains(l[e.field], e.pattern)
-	case excludeGlob:
-		// We use doublestar instead of filepath.Match() because the latter
-		// doesn't support "**" and "{a,b}" patterns, both of which are very
-		// useful here.
-		m, _ = doublestar.Match(e.pattern, l[e.field])
-	case excludeRe:
-		m = e.re.MatchString(l[e.field])
-	}
-	if e.negate {
-		return !m
-	}
-	return m
+	return matchesPattern(e, l[e.field])
 }

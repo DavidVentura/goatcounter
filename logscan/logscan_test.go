@@ -17,6 +17,13 @@ import (
 	"zgo.at/zstd/ztest"
 )
 
+var (
+	_ LineParser = RegexParser{}
+	_ Line       = RegexLine{}
+	_ LineParser = CaddyParser{}
+	_ Line       = CaddyLogEntry{}
+)
+
 func TestErrors(t *testing.T) {
 	_, err := New(strings.NewReader(""), "log:$xxx", "", "", "", nil)
 	if !ztest.ErrorContains(err, "unknown format specifier: $xxx") {
