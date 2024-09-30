@@ -54,8 +54,8 @@ func TestParseLine(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to parse Datetime: %#v", err)
 	}
-	if dt != time.Date(2024, 02, 01, 14, 32, 01, 656359195, time.Local) {
-		t.Fatalf("Unexpected Datetime: %#v", dt)
+	if w := time.Date(2024, 02, 01, 13, 32, 01, 656359195, time.UTC); dt.UTC() != w {
+		t.Fatalf("Unexpected Datetime:\nhave: %#v\nwant: %#v", dt.UTC(), w)
 	}
 	if line.XForwardedFor() != "" {
 		t.Fatalf("Unexpected XForwardedFor: %#v", line.XForwardedFor())

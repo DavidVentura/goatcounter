@@ -26,7 +26,7 @@ const (
 	fieldAcceptLanguage = "accept_language"
 	fieldContentType    = "content_type"
 	fieldHost           = "host"
-	fieldHttp           = "http"
+	fieldHTTP           = "http"
 	fieldMethod         = "method"
 	fieldPath           = "path"
 	fieldQuery          = "query"
@@ -39,7 +39,7 @@ const (
 )
 
 var fields = []string{"ignore", "time", "date", "datetime", fieldRemoteAddr,
-	fieldXff, fieldMethod, fieldStatus, fieldHttp, fieldPath, fieldQuery, fieldReferrer,
+	fieldXff, fieldMethod, fieldStatus, fieldHTTP, fieldPath, fieldQuery, fieldReferrer,
 	fieldUserAgent, fieldHost, fieldContentType, "timing_sec", "timing_milli",
 	"timing_micro", fieldSize}
 

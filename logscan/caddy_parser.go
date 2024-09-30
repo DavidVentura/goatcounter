@@ -171,7 +171,7 @@ func (l CaddyLogEntry) fieldValue(name string) string {
 		return l.Language()
 	case fieldContentType:
 		return l.ContentType()
-	case fieldHttp:
+	case fieldHTTP:
 		return l.HTTP()
 	case fieldMethod:
 		return l.Method()

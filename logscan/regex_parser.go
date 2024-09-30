@@ -94,7 +94,7 @@ func newRegexParser(format, date, tyme, datetime string, exclude []excludePatter
 			p = `[A-Z]{3,10}`
 		case fieldStatus:
 			p = `\d{3}`
-		case fieldHttp:
+		case fieldHTTP:
 			p = `HTTP/[\d.]+`
 		case fieldPath:
 			p = `/.*?`
@@ -131,7 +131,7 @@ func (l RegexLine) Host() string          { return l[fieldHost] }
 func (l RegexLine) RemoteAddr() string    { return l[fieldRemoteAddr] }
 func (l RegexLine) XForwardedFor() string { return l[fieldXff] }
 func (l RegexLine) Method() string        { return l[fieldMethod] }
-func (l RegexLine) HTTP() string          { return l[fieldHttp] }
+func (l RegexLine) HTTP() string          { return l[fieldHTTP] }
 func (l RegexLine) Path() string          { return l[fieldPath] }
 func (l RegexLine) Query() string         { return l[fieldQuery] }
 func (l RegexLine) Referrer() string      { return l[fieldReferrer] }
