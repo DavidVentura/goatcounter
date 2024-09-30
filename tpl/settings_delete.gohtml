@@ -2,30 +2,23 @@
 {{template "_settings_nav.gohtml" .}}
 
 <h2 id="delete">{{.T "header/delete-account|Delete account"}}</h2>
-
-{{if gt (len .Sites) 1}}
-	<p>{{.T `p/delete-account-multi-site|
-		The site and all associated sites will be marked as deleted and will no
-		longer be accessible, but no data is removed. After 7 days all data will be
-		permanently removed.
-	`}}</p>
-{{else}}
-	<p>{{.T `p/delete-account-one-site|
-		The site will be marked as deleted and will no longer be accessible, but no
-		data is removed. After 7 days all data will be permanently removed.
-	`}}</p>
-{{end}}
+<br>
+<div class="flash flash-e">
+<p><strong>{{.T `p/delete-account|
+	The site and all associated data will be permanently removed with no possibility of recovery.
+`}}</strong></p>
+</div>
 
 {{if gt (len .Sites) 1}}
 	<div class="flash flash-e" style="text-align: left;">
 	<p><strong>{{.T "p/notify-site-deletion|%(number) sites will be deleted" (len .Sites)}}</strong>:</p>
 	<ul>{{range $s := .Sites}}
-		<li>{{$s.Domain $.Context}}</li>
+		<li>{{$s.Display $.Context}}</li>
 	{{end}}</ul>
 </div>
 {{end}}
 
-<form method="post" action="/settings/delete-account" class="form-max-width"
+<form method="post" action="{{.Base}}/settings/delete-account" class="form-max-width"
 	data-confirm={{.T "label/delete-account-confirmation|Are you sure you want to delete your entire account?"}}>
 	<input type="hidden" name="csrf" value="{{.User.CSRFToken}}">
 
@@ -46,8 +39,5 @@
 
 	<button type="submit">{{.T "button/delete-account|Delete account, all sites, and all data"}}</button>
 </form>
-{{.T "p/request-data-recovery|%[Contact] within 7 days if you changed your mind and want to recover your data."
-	(tag "a" `href="/contact"`)
-}}</p>
 
 {{template "_backend_bottom.gohtml" .}}

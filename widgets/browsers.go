@@ -58,18 +58,20 @@ func (w *Browsers) GetData(ctx context.Context, a Args) (more bool, err error) {
 
 func (w Browsers) RenderHTML(ctx context.Context, shared SharedData) (string, any) {
 	return "_dashboard_hchart.gohtml", struct {
-		Context     context.Context
-		ID          int
-		RowsOnly    bool
-		HasSubMenu  bool
-		Loaded      bool
-		Err         error
-		IsCollected bool
-		Header      string
-		TotalUTC    int
-		Stats       goatcounter.HitStats
-		Detail      string
-	}{ctx, w.id, shared.RowsOnly, w.Detail == "", w.loaded, w.err, isCol(ctx, goatcounter.CollectUserAgent),
-		z18n.T(ctx, "header/browsers|Browsers"),
+		Context      context.Context
+		Base         string
+		ID           int
+		CanConfigure bool
+		RowsOnly     bool
+		HasSubMenu   bool
+		Loaded       bool
+		Err          error
+		IsCollected  bool
+		Header       string
+		TotalUTC     int
+		Stats        goatcounter.HitStats
+		Detail       string
+	}{ctx, goatcounter.Config(ctx).BasePath, w.id, true, shared.RowsOnly, w.Detail == "", w.loaded, w.err,
+		isCol(ctx, goatcounter.CollectUserAgent), z18n.T(ctx, "header/browsers|Browsers"),
 		shared.TotalUTC, w.Stats, w.Detail}
 }

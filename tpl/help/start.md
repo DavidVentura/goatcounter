@@ -25,12 +25,14 @@ Integrations
 </style>
 
 <div class="integrations">
-<a href="https://github.com/arp242/goatcounter-wordpress">
-    <img width="40" height="40" src="{{.Static}}/int-logo/wp.png"> WordPress</a>
 <a href="https://www.npmjs.com/package/gatsby-plugin-goatcounter">
     <img width="40" height="40" src="{{.Static}}/int-logo/gatsby.svg"> Gatsby</a>
+<a href="https://github.com/htejera/publii-goatcounter-analytics-plugin">
+    <img width="40" height="40" src="{{.Static}}/int-logo/publii.svg"> publii</a>
 <a href="https://www.schlix.com/extensions/analytics/goatcounter.html">
     <img width="40" height="40" src="{{.Static}}/int-logo/schlix.png"> schlix</a>
+<a href="https://github.com/arp242/goatcounter-wordpress">
+    <img width="40" height="40" src="{{.Static}}/int-logo/wp.png"> WordPress</a>
 <a href="" class="expand" data-expand=".write-as">
     <img width="40" height="40" src="{{.Static}}/int-logo/write-as.svg"> Write.as</a>
 </div>
@@ -52,8 +54,8 @@ After setup
 
 Here are some things you may want to look at after setting up the above:
 
-- Make sure GoatCounter is allowed in the [Content-Security-Policy](/code/csp)
-  if you're using it.
+- Make sure GoatCounter is allowed in the
+  [Content-Security-Policy]({{.Base}}/code/csp) if you're using it.
 
 - If you're not seeing any pageviews then chances are your browser's adblocker
   is blocking it. Disable it and check again. It can take about 10 seconds for
@@ -63,7 +65,8 @@ Here are some things you may want to look at after setting up the above:
 
         <link rel="canonical" href="https://example.com/path.html">
 
-    See [Control the path that's sent to GoatCounter](/code/path) for more details.
+    See [Control the path that's sent to GoatCounter]({{.Base}}/code/path) for
+    more details.
 
-- [Prevent tracking my own pageviews?](/code/skip-dev) documents some ways you
-  can ignore your own pageviews from showing up in the dashboard.
+- [Prevent tracking my own pageviews?]({{.Base}}/code/skip-dev) documents some
+  ways you can ignore your own pageviews from showing up in the dashboard.

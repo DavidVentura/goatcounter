@@ -26,7 +26,7 @@
 			return
 
 		let cid  = $('#js-connect-id').text()
-		window.WEBSOCKET = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + document.location.host + '/loader?id=' + cid)
+		window.WEBSOCKET = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + document.location.host + BASE_PATH + '/loader?id=' + cid)
 		window.WEBSOCKET.onmessage = function(e) {
 			let msg = JSON.parse(e.data),
 				wid = $(`#dash-widgets div[data-widget=${msg.id}]`)
@@ -47,7 +47,7 @@
 				btn    = $(this),
 				pos    = btn.offset(),
 				wid    = btn.closest('[data-widget]').attr('data-widget'),
-				url    = '/user/dashboard/' + wid,
+				url    = BASE_PATH + '/user/dashboard/' + wid,
 				remove = function() {
 					pop.remove()
 					$(document.body).off('.unpop')
@@ -94,7 +94,7 @@
 		data['total']  = $('.js-total-utc').text()
 
 		jQuery.ajax({
-			url:  '/load-widget',
+			url:  BASE_PATH + '/load-widget',
 			type: 'get',
 			data: append_period(data),
 			success: function(data) {
@@ -112,7 +112,7 @@
 	// Reload all widgets on the dashboard.
 	var reload_dashboard = function(done) {
 		jQuery.ajax({
-			url:     '/',
+			url:     BASE_PATH + '/',
 			data:    append_period({
 				daily:     $('#daily').is(':checked'),
 				max:       get_original_scale(),
@@ -246,12 +246,14 @@
 
 		// Change to type="date" on mobile as that gives a better experience.
 		//
-		// Not done on *any* desktop OS as styling these fields with basic stuff
+		// Not done on any desktop OS as styling these fields with basic stuff
 		// (like setting a cross-browser consistent height) is really hard and
-		// fraught with all sort of idiocy.
-		// They also don't really look all that great. Especially the Firefox
-		// one looks pretty fucked.
-		if (is_mobile()) {
+		// fraught with all sort of idiocy. They also don't really look all that
+		// great and the UX is frankly bad.
+		//
+		// Also do this if Pikaday is undefined; this should never happen, but
+		// I've seen some errors for this.
+		if (is_mobile() || !window.Pikaday) {
 			return $('#period-start, #period-end').
 				attr('type', 'date').
 				css('width', 'auto').  // Make sure there's room for UI chrome.
@@ -272,6 +274,7 @@
 				months:        months,
 			},
 		}
+		$('#period-start, #period-end').attr('type', 'text')
 		new Pikaday($('#period-start')[0], opts)
 		new Pikaday($('#period-end')[0], opts)
 	}
@@ -323,7 +326,7 @@
 
 			var done = paginate_button($(this), () => {
 				jQuery.ajax({
-					url:    '/user/view',
+					url:    BASE_PATH + '/user/view',
 					method: 'POST',
 					data: {
 						csrf:      CSRF,
@@ -384,7 +387,7 @@
 			$('.list-ref-pages').remove()
 			var done = paginate_button(btn, () => {
 				jQuery.ajax({
-					url: '/pages-by-ref',
+					url: BASE_PATH + '/pages-by-ref',
 					data: append_period({name: btn.text()}),
 					success: function(data) {
 						p.append(data.html)
@@ -541,12 +544,12 @@
 				visits = daily ? day.daily : day.hourly[i%24],
 				views  = daily ? day.daily : day.hourly[i%24]
 
-			let title = ''
-			let future = futureFrom && x >= futureFrom - 1
+			let title = '',
+				future = futureFrom && x >= futureFrom - 1
 			if (daily)
-				title = `${format_date(day.day)}`
+				title = `${format_date(day.day, true)}`
 			else
-				title = `${format_date(day.day)} ${un24(start)} – ${un24(end)}`
+				title = `${format_date(day.day, true)} ${un24(start)} – ${un24(end)}`
 			if (future)
 				title += '; ' + T('dashboard/future')
 			if (!future && !USER_SETTINGS.fewer_numbers) {
@@ -599,35 +602,52 @@
 
 	// Translate country and language names; we do this in JavaScript with Intl,
 	// which works fairly well and keeps the backend/database a lot simpler.
-	var translate_locations = function() {
+	let translate_locations = function() {
 		if (!window.Intl || !window.Intl.DisplayNames)
-			return;
+			return
 
 		USER_SETTINGS.widgets.forEach((w, i) => {
 			if (w.n !== 'locations' && w.n !== 'languages')
 				return
 			if (w.s && w.s.key) // Skip "Locations" for a specific region.
-				return;
+				return
 
-			var names = new Intl.DisplayNames([USER_SETTINGS.language], {
+			let names = new Intl.DisplayNames([USER_SETTINGS.language], {
 				type: (w.n === 'locations' ? 'region' : 'language'),
 			})
-			var set = function(chart) {
+			let set = function(chart) {
 				chart.find('div[data-key]').each((_, e) => {
 					if (e.dataset.key.substr(0, 1) === '(') // Skip "(unknown)"
 						return
-					var n = names.of(e.dataset.key)
-					if (n)
-						$(e).find('.col-name .bar-c .cutoff').text(n)
+					try {
+						let n = names.of(e.dataset.key)
+						if (n)
+							$(e).find('.col-name .bar-c .cutoff').text(n)
+					} catch (exc) {
+						// This errors out with a RangeError sometimes, but
+						// without details and can't reproduce. Add some more
+						// info to see what's going on.
+						exc.message = `${exc.message} for type=${w.n}; key=${e.dataset.key}; content=${$(e).find('.col-name .bar-c .cutoff').text()}`
+						throw exc
+					}
 				})
 			}
 
-			var chart = $(`.hchart[data-widget=${i}]`)
+			let chart = $(`.hchart[data-widget=${i}]`)
 			set(chart)
 
-			var r = chart.find('.rows')[0]
-			if (r) {
-				var obs = new MutationObserver((mut) => {
+			let j = 0
+			let t = setInterval(() => {
+				j += 1
+				if (j > 10)
+					clearInterval(t)
+				let r = chart.find('.rows')[0]
+				if (!r)
+					return
+
+				clearInterval(t)
+				set(chart)
+				let obs = new MutationObserver((mut) => {
 					if (mut[0].addedNodes.length === 0 || mut[0].addedNodes[0].classList.contains('detail'))
 						return
 					obs.disconnect()  // Not strictly needed, but just in case to prevent infinite looping.
@@ -635,7 +655,7 @@
 					obs.observe(chart.find('.rows')[0], {childList: true})
 				})
 				obs.observe(r, {childList: true})
-			}
+			}, 100)
 		})
 	}
 
@@ -657,7 +677,7 @@
 				pages = $(this).closest('.pages-list')
 			let done = paginate_button(btn, () => {
 				jQuery.ajax({
-					url:  '/load-widget',
+					url:  BASE_PATH + '/load-widget',
 					data: append_period({
 						widget:    pages.attr('data-widget'),
 						daily:     $('#daily').is(':checked'),
@@ -732,7 +752,7 @@
 			push_query({showrefs: path})
 			let done = paginate_button(btn , () => {
 				jQuery.ajax({
-					url:   '/load-widget',
+					url:   BASE_PATH + '/load-widget',
 					data: append_period({
 						widget: widget,
 						key:    path,
@@ -786,7 +806,7 @@
 				rows.data('pagesize', rows.children().length)
 			let done = paginate_button($(this), () => {
 				jQuery.ajax({
-					url:  '/load-widget',
+					url:  BASE_PATH + '/load-widget',
 					data: append_period({
 						widget: chart.attr('data-widget'),
 						total:  get_total(),
@@ -820,7 +840,7 @@
 			l.addClass('loading')
 			var done = paginate_button(l, () => {
 				jQuery.ajax({
-					url:     '/load-widget',
+					url:     BASE_PATH + '/load-widget',
 					data:    append_period({
 						widget: widget,
 						key:    key,

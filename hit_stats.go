@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"zgo.at/errors"
-	"zgo.at/z18n"
 	"zgo.at/zdb"
 	"zgo.at/zstd/ztime"
 )
@@ -48,12 +47,12 @@ func asUTCDate(u *User, t time.Time) string {
 // total number of hits.
 func (h *HitStats) ListTopRefs(ctx context.Context, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	site := MustGetSite(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:ref.ListTopRefs.sql", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:ref.ListTopRefs.sql", map[string]any{
 		"site":       site.ID,
 		"start":      rng.Start,
 		"end":        rng.End,
 		"filter":     pathFilter,
-		"ref":        site.LinkDomain + "%",
+		"ref":        site.LinkDomainURL(false) + "%",
 		"limit":      limit + 1,
 		"limit2":     limit + (limit * 3),
 		"offset":     offset,
@@ -72,7 +71,7 @@ func (h *HitStats) ListTopRefs(ctx context.Context, rng ztime.Range, pathFilter 
 
 // ListTopRef lists all paths by referrer.
 func (h *HitStats) ListTopRef(ctx context.Context, ref string, rng ztime.Range, pathFilter []int64, limit, offset int) error {
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ByRef", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ByRef", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  rng.Start,
 		"end":    rng.End,
@@ -91,7 +90,7 @@ func (h *HitStats) ListTopRef(ctx context.Context, ref string, rng ztime.Range, 
 // ListBrowsers lists all browser statistics for the given time period.
 func (h *HitStats) ListBrowsers(ctx context.Context, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListBrowsers", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListBrowsers", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  asUTCDate(user, rng.Start),
 		"end":    asUTCDate(user, rng.End),
@@ -109,7 +108,7 @@ func (h *HitStats) ListBrowsers(ctx context.Context, rng ztime.Range, pathFilter
 // ListBrowser lists all the versions for one browser.
 func (h *HitStats) ListBrowser(ctx context.Context, browser string, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListBrowser", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListBrowser", map[string]any{
 		"site":    MustGetSite(ctx).ID,
 		"start":   asUTCDate(user, rng.Start),
 		"end":     asUTCDate(user, rng.End),
@@ -128,7 +127,7 @@ func (h *HitStats) ListBrowser(ctx context.Context, browser string, rng ztime.Ra
 // ListSystems lists OS statistics for the given time period.
 func (h *HitStats) ListSystems(ctx context.Context, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSystems", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSystems", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  asUTCDate(user, rng.Start),
 		"end":    asUTCDate(user, rng.End),
@@ -146,7 +145,7 @@ func (h *HitStats) ListSystems(ctx context.Context, rng ztime.Range, pathFilter 
 // ListSystem lists all the versions for one system.
 func (h *HitStats) ListSystem(ctx context.Context, system string, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSystem", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSystem", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  asUTCDate(user, rng.Start),
 		"end":    asUTCDate(user, rng.End),
@@ -174,7 +173,7 @@ const (
 // ListSizes lists all device sizes.
 func (h *HitStats) ListSizes(ctx context.Context, rng ztime.Range, pathFilter []int64) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSizes", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSizes", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  asUTCDate(user, rng.Start),
 		"end":    asUTCDate(user, rng.End),
@@ -186,14 +185,13 @@ func (h *HitStats) ListSizes(ctx context.Context, rng ztime.Range, pathFilter []
 
 	// Group a bit more user-friendly.
 	ns := []HitStat{
-		{Name: z18n.T(ctx, "label/phones|Phones"), ID: sizePhones, Count: 0},
-		{Name: z18n.T(ctx, "label/large-phones|Large phones, small tablets"), ID: sizeLargePhones, Count: 0},
-		{Name: z18n.T(ctx, "label/tablets|Tablets and small laptops"), ID: sizeTablets, Count: 0},
-		{Name: z18n.T(ctx, "label/desktops|Computer monitors"), ID: sizeDesktop, Count: 0},
-		{Name: z18n.T(ctx, "label/desktops-hd|Computer monitors larger than HD"), ID: sizeDesktopHD, Count: 0},
-		{Name: z18n.T(ctx, "unknown|(unknown)"), ID: sizeUnknown, Count: 0},
+		{ID: sizePhones, Count: 0},
+		{ID: sizeLargePhones, Count: 0},
+		{ID: sizeTablets, Count: 0},
+		{ID: sizeDesktop, Count: 0},
+		{ID: sizeDesktopHD, Count: 0},
+		{ID: sizeUnknown, Count: 0},
 	}
-
 	for i := range h.Stats {
 		x, _ := strconv.ParseInt(h.Stats[i].Name, 10, 16)
 		switch {
@@ -219,20 +217,20 @@ func (h *HitStats) ListSizes(ctx context.Context, rng ztime.Range, pathFilter []
 // ListSize lists all sizes for one grouping.
 func (h *HitStats) ListSize(ctx context.Context, id string, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	var (
-		min_size, max_size int
-		empty              bool
+		minSize, maxSize int
+		empty            bool
 	)
 	switch id {
 	case sizePhones:
-		max_size = 384
+		maxSize = 384
 	case sizeLargePhones:
-		min_size, max_size = 384, 1024
+		minSize, maxSize = 384, 1024
 	case sizeTablets:
-		min_size, max_size = 1024, 1440
+		minSize, maxSize = 1024, 1440
 	case sizeDesktop:
-		min_size, max_size = 1440, 1920
+		minSize, maxSize = 1440, 1920
 	case sizeDesktopHD:
-		min_size, max_size = 1920, 99999
+		minSize, maxSize = 1920, 99999
 	case sizeUnknown:
 		empty = true
 	default:
@@ -240,13 +238,13 @@ func (h *HitStats) ListSize(ctx context.Context, id string, rng ztime.Range, pat
 	}
 
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSize", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListSize", map[string]any{
 		"site":     MustGetSite(ctx).ID,
 		"start":    asUTCDate(user, rng.Start),
 		"end":      asUTCDate(user, rng.End),
 		"filter":   pathFilter,
-		"min_size": min_size,
-		"max_size": max_size,
+		"min_size": minSize,
+		"max_size": maxSize,
 		"empty":    empty,
 		"limit":    limit + 1,
 		"offset":   offset,
@@ -267,7 +265,7 @@ func (h *HitStats) ListSize(ctx context.Context, id string, rng ztime.Range, pat
 // ListLocations lists all location statistics for the given time period.
 func (h *HitStats) ListLocations(ctx context.Context, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListLocations", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListLocations", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  asUTCDate(user, rng.Start),
 		"end":    asUTCDate(user, rng.End),
@@ -285,7 +283,7 @@ func (h *HitStats) ListLocations(ctx context.Context, rng ztime.Range, pathFilte
 // ListLocation lists all divisions for a location
 func (h *HitStats) ListLocation(ctx context.Context, country string, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListLocation", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListLocation", map[string]any{
 		"site":    MustGetSite(ctx).ID,
 		"start":   asUTCDate(user, rng.Start),
 		"end":     asUTCDate(user, rng.End),
@@ -304,7 +302,7 @@ func (h *HitStats) ListLocation(ctx context.Context, country string, rng ztime.R
 // ListLanguages lists all language statistics for the given time period.
 func (h *HitStats) ListLanguages(ctx context.Context, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListLanguages", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListLanguages", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  asUTCDate(user, rng.Start),
 		"end":    asUTCDate(user, rng.End),
@@ -322,7 +320,7 @@ func (h *HitStats) ListLanguages(ctx context.Context, rng ztime.Range, pathFilte
 // ListCampaigns lists all campaigns statistics for the given time period.
 func (h *HitStats) ListCampaigns(ctx context.Context, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListCampaigns", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListCampaigns", map[string]any{
 		"site":   MustGetSite(ctx).ID,
 		"start":  asUTCDate(user, rng.Start),
 		"end":    asUTCDate(user, rng.End),
@@ -340,7 +338,7 @@ func (h *HitStats) ListCampaigns(ctx context.Context, rng ztime.Range, pathFilte
 // ListCampaign lists all statistics for a campaign.
 func (h *HitStats) ListCampaign(ctx context.Context, campaign int64, rng ztime.Range, pathFilter []int64, limit, offset int) error {
 	user := MustGetUser(ctx)
-	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListCampaign", zdb.P{
+	err := zdb.Select(ctx, &h.Stats, "load:hit_stats.ListCampaign", map[string]any{
 		"site":     MustGetSite(ctx).ID,
 		"start":    asUTCDate(user, rng.Start),
 		"end":      asUTCDate(user, rng.End),

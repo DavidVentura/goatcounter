@@ -8,7 +8,7 @@ notification of this to everyone who has generated an API key.
 
 Authentication
 --------------
-To use the API create a key in your account (`User → API`); send the API key in
+To use the API create a key in your account (`[Username in top menu] → API`); send the API key in
 the `Authorization` header as `Authorization: Bearer [token]`. You will need to
 use `Content-Type: application/json`; all requests return JSON unless noted
 otherwise.
@@ -63,7 +63,7 @@ API reference
 -------------
 API reference docs are available at:
 
-- [/api.json](/api.json) – OpenAPI 2.0 JSON file.
+- [/api.json]({{.Base}}/api.json) – OpenAPI 2.0 JSON file.
 - Online viewer: [RapiDoc][1], [SwaggerHub][2] <!-- too broken for now  [simple HTML][3] -->
 
 [1]: /api2.html

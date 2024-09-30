@@ -42,7 +42,8 @@ Overview:
         $ goatcounter import -site=https://stats.example.com export.csv.gz
 
     You can create an API key with "goatcounter db create apikey -count", or
-    from the web interface in "User → API" from the top-right menu.
+    from the web interface in "[Username in top menu] → API" from the top-right
+    menu.
 
     You must give one filename to import; use - to read from stdin:
 
@@ -309,7 +310,7 @@ func importCSV(fp io.ReadCloser, url, key string, silent bool) error {
 
 			n += len(hits)
 			if !silent {
-				zli.ReplaceLinef("Imported %d rows", n)
+				zli.Replacef("Imported %d rows", n)
 			}
 
 			hits = make([]handlers.APICountRequestHit, 0, 500)
@@ -404,7 +405,7 @@ func importLog(
 			t.Reset(d)
 			persistLog(hits, url, key, silent, follow)
 			if !silent && !follow {
-				zli.ReplaceLinef("Imported %d rows", n)
+				zli.Replacef("Imported %d rows", n)
 			}
 		}
 	}
@@ -429,10 +430,7 @@ func persistLog(hits <-chan handlers.APICountRequestHit, url, key string, silent
 	}
 }
 
-var (
-	importClient = http.Client{Timeout: 5 * time.Second}
-	nSent        int64
-)
+var importClient = http.Client{Timeout: 5 * time.Second}
 
 func importSend(url, key string, silent, follow bool, hits []handlers.APICountRequestHit) error {
 	body, err := json.Marshal(handlers.APICountRequest{NoSessions: true, Hits: hits})
